@@ -2316,12 +2316,12 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 			else
 				ServicesToSave = mode
 			end	
-			for _, serviceName in ServicesToSave do
-				local _service = game:FindService(serviceName)
-				if _service and not tmp_dict[_service] then
-					table.insert(tmp, _service)
-				end
-			end
+for _, serviceName in ipairs(ServicesToSave) do
+	local ok, _service = pcall(game.GetService, game, serviceName)
+	if ok and _service and not tmp_dict[_service] then
+		table.insert(tmp, _service)
+	end
+end
 		elseif mode == "scripts" then
 			-- TODO: Only save paths that lead to scripts (nothing else)
 			-- Currently saves paths along with children of each tree
