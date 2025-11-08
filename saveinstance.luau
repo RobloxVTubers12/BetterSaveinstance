@@ -1871,12 +1871,12 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 		mode = "optimized",
 		noscripts = false,
 		scriptcache = true,
-		decomptype = "",
+		decomptype = "optimized",
 		timeout = 10,
 		-- * New:
 		__DEBUG_MODE = false,
 		Crashlog = false,
-		-- Binary = false, -- true in syn newer versions (false in our case because no binary support yet), Description: Saves everything in Binary Mode (rbxl/rbxm).
+		-- Binary = true, -- true in syn newer versions (false in our case because no binary support yet), Description: Saves everything in Binary Mode (rbxl/rbxm).
 		Callback = false,
 		--Clipboard/CopyToClipboard = false, -- Description: If set to true, the serialized data will be set to the clipboard, which can be later pasted into studio easily. Useful for saving models. -- Seems to not work with XML form
 		-- MaxThreads = 3 -- Description: The number of decompilation threads that can run at once. More threads means it can decompile for scripts at a time.
@@ -1888,13 +1888,13 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 			"TextChatService",
 			ModuleScript = nil,
 		},
-		IgnoreDefaultPlayerScripts = not ArrayToDict({ "Wave", "Potassium", "Volcano", "Solara"})[EXECUTOR_NAME],
-		SaveBytecode = false,
+		IgnoreDefaultPlayerScripts = false
+		SaveBytecode = true,
 		SaveBytecodeIfDecompilerFails = false,
-		SaveCompilationErrors = true,
+		SaveCompilationErrors = false,
 		IgnoreProperties = {},
 
-		IgnoreList = { "CoreGui", "CorePackages" },
+		IgnoreList = {},
 		SaveAsAttributes = false,
 		ExtraInstances = {},
 		NilInstances = false,
