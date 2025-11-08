@@ -103,7 +103,7 @@ do -- * Load Region of Déjà Vu
 		return UGCValidationService:GetPropertyValue(instance, propertyName) -- TODO Sadly there's no way to tell whether value is actually nil or the function just couldn't read it (always returns nil for "Class" category properties)
 		-- TODO `category ~= "Class"` causes WeldConstraint Part1Internal to be read as nil and not get unfiltered. Currently, there are no properties of category "Class" that match the following: NotScriptable, can be read with gethiddenproperty_fallback accurately (it always outputs nil for "Class" category, making that check useless anyway) & don't have a NotScriptableFix.
 	end
-	if gethiddenproperty and EXECUTOR_NAME ~= "Velocity" then -- Velocity fails due to enums not being supported, but BinaryString and SharedString still are (handled later)
+	if gethiddenproperty and EXECUTOR_NAME ~= "Xeno" then -- Velocity fails due to enums not being supported, but BinaryString and SharedString still are (handled later)
 		local o, r = pcall(gethiddenproperty, workspace, "StreamOutBehavior")
 		if not o or r ~= nil and typeof(r) ~= "EnumItem" then -- * Tests if gethiddenproperty is broken
 			gethiddenproperty = nil
@@ -2286,7 +2286,7 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 			-- end
 			local tmp_dict = ArrayToDict(tmp)
 			local ServicesToSave
-			if mode == "optimized" then
+			if mode == "Default" then
 				ServicesToSave = {
 					"Workspace",
 					"Players",
