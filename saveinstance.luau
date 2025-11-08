@@ -1883,12 +1883,8 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 		-- DisableCompression = false, --Description: Disables compression in the binary output
 
 		DecompileJobless = false,
-		DecompileIgnore = { -- * Clean these up (merged Old Syn and New Syn)
-			-- "Chat",
-			"TextChatService",
-			ModuleScript = nil,
-		},
-		IgnoreDefaultPlayerScripts = false
+		DecompileIgnore = false,
+		IgnoreDefaultPlayerScripts = false,
 		SaveBytecode = true,
 		SaveBytecodeIfDecompilerFails = false,
 		SaveCompilationErrors = false,
