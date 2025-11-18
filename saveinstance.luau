@@ -2071,28 +2071,24 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 	local StatusText
 
 	local OPTIONS = {
-		mode = "optimized",
+		mode = "full",
 		noscripts = false,
 		scriptcache = true,
-		-- decomptype = "",
-		timeout = 10,
+		decomptype = "new",
+		timeout = 0,
 		-- * New:
 		__DEBUG_MODE = false,
 
-		-- Binary = false, -- true in syn newer versions (false in our case because no binary support yet), Description: Saves everything in Binary Mode (rbxl/rbxm).
+		Binary = true, -- true in syn newer versions (false in our case because no binary support yet), Description: Saves everything in Binary Mode (rbxl/rbxm).
 		Callback = false,
 		--Clipboard/CopyToClipboard = false, -- Description: If set to true, the serialized data will be set to the clipboard, which can be later pasted into studio easily. Useful for saving models. (Binary Only)
-		-- MaxThreads = 3 -- Description: The number of decompilation threads that can run at once. More threads means it can decompile for scripts at a time.
+		--MaxThreads = 100 -- Description: The number of decompilation threads that can run at once. More threads means it can decompile for scripts at a time.
 		-- DisableCompression = false, --Description: Disables compression in the binary output
 
 		DecompileJobless = false,
-		DecompileIgnore = { -- * Clean these up (merged Old Syn and New Syn)
-			-- "Chat",
-			"TextChatService",
-			ModuleScript = nil,
-		},
-		IgnoreDefaultPlayerScripts = true,
-		SaveBytecode = false,
+		DecompileIgnore = {},
+		IgnoreDefaultPlayerScripts = false,
+		SaveBytecode = true,
 
 		IgnoreProperties = {},
 
@@ -2108,13 +2104,13 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 		ShutdownWhenDone = false,
 		AntiIdle = true,
 		Anonymous = false,
-		ReadMe = true,
+		ReadMe = false,
 		FilePath = false,
 		Object = false,
 		IsModel = false,
 
-		IgnoreDefaultProperties = true,
-		IgnoreNotArchivable = true,
+		IgnoreDefaultProperties = false,
+		IgnoreNotArchivable = false,
 		IgnorePropertiesOfNotScriptsOnScriptsMode = false,
 		IgnoreSpecialProperties = ArrayToDict({ "Fluxus", "Delta", "Solara" })[EXECUTOR_NAME] or false, -- ! Please submit more Executors that crash on gethiddenproperty (with this disabled basically)
 
@@ -2155,7 +2151,7 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 		AlternativeWritefile = not ArrayToDict({ "WRD", "Xeno", "Zorara" })[EXECUTOR_NAME],
 
 		OptionsAliases = { -- You can't really modify these as a user
-			DecompileTimeout = "timeout",
+			DecompileTimeout = "0",
 			FileName = "FilePath",
 			IgnoreArchivable = "IgnoreNotArchivable",
 			IgnoreDefaultProps = "IgnoreDefaultProperties",
@@ -2614,7 +2610,7 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 	local function construct_TimeoutHandler(timeout, f, timeout_ret)
 		return timeout < 0 and function(script)
 			return pcall(f, script)
-		end or function(script) -- TODO Ideally use ... (vararg) instead of `script` in case this is reused for something other than `decompile` & `getscriptbytecode`
+		end or function(vararg) -- TODO Ideally use ... (vararg) instead of `script` in case this is reused for something other than `decompile` & `getscriptbytecode`
 			local thread = coroutine.running()
 			local timeoutThread, isCancelled
 
