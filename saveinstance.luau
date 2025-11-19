@@ -1068,7 +1068,7 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 		__DEBUG_MODE = false,
 
 		Binary = true, -- true in syn newer versions (false in our case because no binary support yet), Description: Saves everything in Binary Mode (rbxl/rbxm).
-		Callback = true, -- Description: If set, the serialized data will be sent to the callback instead of to file.
+		--Callback = true, -- Description: If set, the serialized data will be sent to the callback instead of to file.
 		--Clipboard/CopyToClipboard = true, -- Description: If set to true, the serialized data will be set to the clipboard, which can be later pasted into studio easily. Useful for saving models.
 		MaxThreads = 100, -- Description: The number of decompilation threads that can run at once. More threads means it can decompile for scripts at a time.
 		DisableCompression = true, --Description: Disables compression in the binary output
@@ -1116,7 +1116,7 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 
 		IgnoreSharedStrings = true,
 		SharedStringOverwrite = false,
-		TreatUnionsAsParts = EXECUTOR_NAME == "Solara", -- TODO Temporary true for Solara (once removed, remove Note from docs too)
+		TreatUnionsAsParts = EXECUTOR_NAME == "Xeno", -- TODO Temporary true for Solara (once removed, remove Note from docs too)
 
 		OptionsAliases = { -- You can't really modify these as a user
 			FilePath = "FileName",
