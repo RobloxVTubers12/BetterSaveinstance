@@ -2296,7 +2296,7 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 		noscripts = false,
 		scriptcache = true,
 		decomptype = "",
-		timeout = 30,
+		timeout = 0,
 		-- * New:
 		__DEBUG_MODE = false,
 		DisableGethiddenpropertyFallback = (gethiddenproperty and EXECUTOR_NAME ~= "Nihon") or false,
@@ -2313,8 +2313,8 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 			"TextChatService",
 			ModuleScript = nil,
 		},
-		IgnoreDefaultPlayerScripts = true,
-		SaveBytecode = false,
+		IgnoreDefaultPlayerScripts = false,
+		SaveBytecode = true,
 		SaveBytecodeIfDecompilerFails = false,
 		SaveCompilationErrors = true,
 		IgnoreProperties = {},
@@ -2331,15 +2331,15 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 		ShutdownWhenDone = false,
 		AntiIdle = true,
 		Anonymous = false,
-		ReadMe = true,
+		ReadMe = false,
 		FilePath = false,
 		Object = false,
 		IsModel = false,
 
-		IgnoreDefaultProperties = true,
+		IgnoreDefaultProperties = false,
 		InstancesBlacklist = "IgnoreList",
 		IsolatePlayerGui = "IsolateLocalPlayer",
-		IgnoreNotArchivable = true,
+		IgnoreNotArchivable = false,
 		IgnorePropertiesOfNotScriptsOnScriptsMode = false,
 		IgnoreSpecialProperties = ArrayToDict({"Xeno", "Solara"})[EXECUTOR_NAME] or false, -- ! Please submit more Executors that crash on gethiddenproperty (with this disabled basically). Xeno (also JJSploit, which uses Xeno's api and has the same identifyexecutor() as Xeno) is because gethiddenproperty returns 0 when it can't read a property instead of failing. Solara's gethiddenproperty is just slow.
 
