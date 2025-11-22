@@ -430,7 +430,7 @@ return {
 
 	string = function(raw, skipcheck)
         -- Escape string unless skipcheck is true
-		return (not skipcheck and raw == "") and raw or raw:gsub(EscapesPattern, Escapes)
+return raw
 	end,
 }
 
