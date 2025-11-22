@@ -2647,10 +2647,6 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 			end
 		end
 		print("Done")
-				
-		If you can't move the Camera, run this script in the Studio Command Bar:
-			
-		workspace.CurrentCamera.CameraType = Enum.CameraType.Fixed
 		
 		Or Destroy the Camera.
 
