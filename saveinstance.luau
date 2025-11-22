@@ -1,8 +1,3 @@
---!native
---!optimize 2
---!divine-intellect
--- https://discord.gg/wx4ThpAsmw
-
 local service = setmetatable({}, {
 	__index = function(self, index)
 		local Service = game:GetService(index) or settings():GetService(index) or UserSettings():GetService(index)
@@ -11,7 +6,7 @@ local service = setmetatable({}, {
 	end,
 })
 
-local function string_find(s, pattern)
+local function Find(s, pattern)
 	return string.find(s, pattern, nil, true)
 end
 
@@ -72,30 +67,24 @@ do
 
 	finder({
 		-- readbinarystring = 'string.find(...,"bin",nil,true)', -- ! Could match some unwanted stuff (getbinaryindex)
-		-- request = 'string.find(...,"request",nil,true) and not string.find(...,"internal",nil,true)',
 		base64encode = 'local a={...}local b=a[1]local function c(a,b)return string.find(a,b,nil,true)end;return c(b,"encode")and(c(b,"base64")or c(string.lower(tostring(a[2])),"base64"))',
 		decompile = '(string.find(...,"decomp",nil,true) and string.sub(...,#...) ~= "s") or string.find(...,"assembl",nil,true)',
 		gethiddenproperty = 'string.find(...,"get",nil,true) and string.find(...,"h",nil,true) and string.find(...,"prop",nil,true) and string.sub(...,#...) ~= "s"',
 		gethui = 'string.find(...,"get",nil,true) and string.find(...,"h",nil,true) and string.find(...,"ui",nil,true)',
 		getnilinstances = 'string.find(...,"nil",nil,true) and string.find(...,"get",nil,true) and string.sub(...,#...) == "s"', -- ! Could match some unwanted stuff
-		getscriptbytecode = 'string.find(...,"get",nil,true) and string.find(...,"bytecode",nil,true)', --  or string.find(...,"dump",nil,true) and string.find(...,"string",nil,true) due to Fluxus (dumpstring returns a function)
+		getscriptbytecode = 'string.find(...,"get",nil,true) and string.find(...,"bytecode",nil,true) or string.find(...,"dump",nil,true) and string.find(...,"string",nil,true)',
 		hash = 'local a={...}local b=a[1]local function c(a,b)return string.find(a,b,nil,true)end;return c(b,"hash")and c(string.lower(tostring(a[2])),"crypt")',
 		protectgui = 'string.find(...,"protect",nil,true) and string.find(...,"ui",nil,true) and not string.find(...,"un",nil,true)',
-		-- appendfile = 'string.find(...,"file",nil,true) and string.find(...,"append",nil,true)',
-		readfile = 'string.find(...,"file",nil,true) and string.find(...,"read",nil,true)',
+		-- request = 'string.find(...,"request",nil,true) and not string.find(...,"internal",nil,true)',
 		writefile = 'string.find(...,"file",nil,true) and string.find(...,"write",nil,true)',
-		setthreadidentity = 'string.find(...,"identity",nil,true) and string.find(...,"set",nil,true)',
+		-- appendfile = 'string.find(...,"file",nil,true) and string.find(...,"append",nil,true)',
 	}, true, 10)
 end
 
 local identify_executor = identifyexecutor or getexecutorname or whatexecutor
-
-local EXECUTOR_NAME = identify_executor()
-
 local gethiddenproperty = global_container.gethiddenproperty
--- local appendfile = global_container.appendfile
-local readfile = global_container.readfile
 local writefile = global_container.writefile
+-- local appendfile = global_container.appendfile
 
 local getscriptbytecode = global_container.getscriptbytecode -- * A lot of assumptions are made based on whether this function is defined or not. So in certain edge cases, like if the executor defines "decompile" or "getscripthash" function yet doesn't define this function there might be loss of functionality of the saveinstance. Although that would be very rare and weird
 local base64encode = global_container.base64encode
@@ -216,6 +205,8 @@ if getscriptbytecode then
 		end
 	end
 end
+
+local isElectron = type(identify_executor) == "function" and identify_executor() == "Electron"
 
 local SharedStrings = {}
 local SharedString_identifiers = setmetatable({
@@ -541,7 +532,7 @@ XML_Descriptors = {
 		return "<min>" .. descriptor(min) .. "</min><max>" .. descriptor(max) .. "</max>"
 	end,
 	__PROTECTEDSTRING = function(raw) -- ? its purpose is to "protect" data from being treated as ordinary character data during processing;
-		return string_find(raw, "]]>") and string.gsub(raw, ESCAPES_PATTERN, ESCAPES) or XML_Descriptors.__CDATA(raw)
+		return Find(raw, "]]>") and string.gsub(raw, ESCAPES_PATTERN, ESCAPES) or XML_Descriptors.__CDATA(raw)
 	end,
 	__SEQUENCE = function(raw, valueFormatter) --The value is the text content, formatted as a space-separated list of floating point numbers.
 		-- tostring(raw) also works (but way slower rn)
@@ -584,7 +575,7 @@ XML_Descriptors = {
 	-- ! Fix for Electron v3
 	-- ! Electron v3 'gethiddenproperty' automatically base64 encodes BinaryString values
 
-	BinaryString = EXECUTOR_NAME == "Electron" and function(raw)
+	BinaryString = isElectron and function(raw)
 		return raw
 	end or base64encode,
 
@@ -663,8 +654,8 @@ XML_Descriptors = {
 	Font = function(raw)
 		local FontString = tostring(raw) -- TODO: Temporary fix
 
-		local EmptyWeight = string_find(FontString, "Weight = ,")
-		local EmptyStyle = string_find(FontString, "Style =  }")
+		local EmptyWeight = Find(FontString, "Weight = ,")
+		local EmptyStyle = Find(FontString, "Style =  }")
 
 		return "<Family>"
 			.. XML_Descriptors.Content(raw.Family)
@@ -812,7 +803,7 @@ The value of each component is represented by the text content formatted as a 32
 	int64 = nil,
 	string = function(raw, skipEmptyCheck)
 		return not skipEmptyCheck and raw == "" and raw
-			or string_find(raw, "]]>") and string.gsub(raw, ESCAPES_PATTERN, ESCAPES)
+			or Find(raw, "]]>") and string.gsub(raw, ESCAPES_PATTERN, ESCAPES)
 			or XML_Descriptors.__CDATA(string.gsub(raw, "\0", ""))
 	end,
 }
@@ -833,49 +824,14 @@ do
 	local ClassPropertyExceptions = { TriangleMeshPart = ArrayToDictionary({ "CollisionFidelity" }) }
 
 	local function FetchAPI()
-		-- * You can also use: https://setup.rbxcdn.com/{https://setup.rbxcdn.com/versionQTStudio}-Full-API-Dump.json
-		-- * https://setup.rbxcdn.com/versionQTStudio seems to be a bit behind DeployHistory.txt
-		local API_Dump
-		if
-			not pcall(function()
-				local VERSIONS = version()
-
-				local o, r = pcall(readfile, VERSIONS)
-				if o and r and r ~= "" then
-					API_Dump = r
-					return
-				end
-
-				local latest_commit = service.HttpService:JSONDecode(
-					game:HttpGet(
-						"https://api.github.com/search/commits?sort=committer-date&order=desc&q=repo:MaximumADHD/Roblox-Client-Tracker+0."
-							.. string.split(VERSIONS, ".")[2],
-						true
-					)
-				).items[1]
-				-- print(VERSIONS)
-				-- print(latest_commit.commit.message)
-				API_Dump = game:HttpGet(
-					"https://raw.githubusercontent.com/MaximumADHD/Roblox-Client-Tracker/"
-						.. latest_commit.sha
-						.. "/Mini-API-Dump.json",
-					true
-				)
-
-				writefile(VERSIONS, API_Dump) -- ? To avoid 60 requests / 1 h limit on GitHub Api
-			end)
-		then
-			warn("Failed to get " .. version() .. " API Dump, trying latest..")
-			API_Dump = game:HttpGet(
-				"https://raw.githubusercontent.com/MaximumADHD/Roblox-Client-Tracker/roblox/Mini-API-Dump.json",
-				true
-			)
-		end
+		local API_Dump_Url =
+			"https://raw.githubusercontent.com/MaximumADHD/Roblox-Client-Tracker/roblox/Mini-API-Dump.json"
+		local API_Dump = game:HttpGet(API_Dump_Url, true)
 
 		local classList = {}
 
 		for _, API_Class in service.HttpService:JSONDecode(API_Dump).Classes do
-			local ClassProperties, ClassProperties_size = {}, 1
+			local ClassProperties = {}
 			local Class = {
 				Properties = ClassProperties,
 				Superclass = API_Class.Superclass,
@@ -917,7 +873,7 @@ do
 								Special = MemberTags.NotScriptable
 							end
 							-- if not Special then
-							ClassProperties[ClassProperties_size] = {
+							ClassProperties[PropertyName] = {
 								Name = PropertyName,
 								Category = ValueType.Category,
 								-- Default = Member.Default,
@@ -928,7 +884,6 @@ do
 
 								CanRead = nil,
 							}
-							ClassProperties_size += 1
 							-- end
 						end
 					end
@@ -955,9 +910,9 @@ end
 
 local inherited_properties = {}
 local default_instances = {}
-local referents, ref_size = {}, 0 -- ? Roblox encodes all <Item> elements with a referent attribute. Each value is generated by starting with the prefix RBX, followed by a UUID version 4, with - characters removed, and all characters converted to uppercase.
+local referents, ref_count = {}, 0 -- ? Roblox encodes all <Item> elements with a referent attribute. Each value is generated by starting with the prefix RBX, followed by a UUID version 4, with - characters removed, and all characters converted to uppercase.
 
-local GLOBAL_ENV = getgenv and getgenv() or _G or shared
+local globalEnv = getgenv and getgenv() or _G or shared
 
 --[=[
     @class SynSaveInstance
@@ -980,7 +935,7 @@ local GLOBAL_ENV = getgenv and getgenv() or _G or shared
 --- @field timeout number -- If the decompilation run time exceeds this value it gets cancelled. Set to -1 to disable timeout (unreliable). ***Aliases***: `DecompileTimeout`. ___Default:___ 10
 --- @field DecompileJobless boolean -- Includes already decompiled code in the output. No new scripts are decompiled. ___Default:___ false
 --- @field SaveBytecode boolean -- Includes bytecode in the output. Useful if you wish to be able to decompile it yourself later. ___Default:___ false
---- .DecompileIgnore {Instance | Instance.ClassName | [Instance.ClassName] = {Instance.Name}} -- * Ignores match & it's descendants by default. To Ignore only the instance itself set the value to `= false`. Examples: "Chat", - Matches any instance with "Chat" ClassName, Players = {"MyPlayerName"} - Matches "Players" Class AND "MyPlayerName" Name ONLY, `workspace` - matches Instance by reference, `[workspace] = false` - matches Instance by reference and only ignores the instance itself and not it's descendants. ___Default:___ {Chat, TextChatService, ModuleScript = { "PlayerModule" }}
+--- .DecompileIgnore {Instance | Instance.ClassName | [Instance.ClassName] = {Instance.Name}} -- * Ignores match & it's descendants by default. To Ignore only the instance itself set the value to `= false`. Examples: "Chat", - Matches any instance with "Chat" ClassName, Players = {"MyPlayerName"} - Matches "Players" Class AND "MyPlayerName" Name ONLY, `workspace` - matches Instance by reference, `[workspace] = false` - matches Instance by reference and only ignores the instance itself and not it's descendants. ___Default:___ {Chat, TextChatService}
 --- .IgnoreList {Instance | Instance.ClassName | [Instance.ClassName] = {Instance.Name}} -- Structure is similar to **@DecompileIgnore** except `= false` meaning if you ignore one instance it will automatically ignore it's descendants. ___Default:___ {CoreGui, CorePackages}
 --- .ExtraInstances {Instance} -- If used with any invalid mode (like "invalidmode") it will only save these instances. ___Default:___ {}
 --- @field IgnoreProperties table -- Ignores properties by Name. ___Default:___ {}
@@ -1004,7 +959,6 @@ local GLOBAL_ENV = getgenv and getgenv() or _G or shared
 --- @field IsolatePlayers boolean -- * This option does save players, it's just they won't show up in Studio and can only be viewed through the place file code (in text editor). More info at https://github.com/luau/UniversalSynSaveInstance/issues/2. ___Default:___ false
 --- @field IgnoreSharedStrings boolean -- * **RISKY: FIXES CRASHES (TEMPORARY, TESTED ON ROEXEC ONLY). FEEL FREE TO DISABLE THIS TO SEE IF IT WORKS FOR YOU**. ___Default:___ true
 --- @field SharedStringOverwrite boolean -- * **RISKY:** if the process is not finished aka crashed then none of the affected values will be available. SharedStrings can also be used for ValueTypes that aren't `SharedString`, this behavior is not documented anywhere but makes sense (Could create issues though, due to _potential_ ValueType mix-up, only works on certain types which are all base64 encoded so far). Reason: Allows for potential smaller file size (can also be bigger in some cases). ___Default:___ false
---- @field TreatUnionsAsParts boolean -- * **RISKY:** Converts all UnionOperations to Parts. Useful if your Executor isn't able to save (read) Unions, because otherwise they will be invisible. ___Default:___ false (except Solara)
 
 --- @interface OptionsAliases
 --- @within SynSaveInstance
@@ -1040,21 +994,8 @@ local GLOBAL_ENV = getgenv and getgenv() or _G or shared
 ]=]
 
 local function synsaveinstance(CustomOptions, CustomOptions2)
-	-- if GLOBAL_ENV.__USSI then
-	-- 	warn("UniversalSynSaveInstance is already running")
-	-- 	return
-	-- end
-	-- GLOBAL_ENV.__USSI = true
-
-	do
-		local setthreadidentity = global_container.setthreadidentity
-		if setthreadidentity then
-			pcall(setthreadidentity, 8) -- ? Arceus X Fix
-		end
-	end
-
 	local totalstr, totalsize = "", 0
-	local savebuffer, savebuffer_size = { '<roblox version="4">' }, 2
+	local savebuffer, savebuffer_count = { '<roblox version="4">' }, 2
 
 	local StatusText
 
@@ -1062,22 +1003,21 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 		mode = "optimized",
 		noscripts = false,
 		scriptcache = true,
-		decomptype = "new",
-		timeout = 0,
+		decomptype = "",
+		timeout = 10,
 		--* New:
 		__DEBUG_MODE = false,
 
-		Binary = true, -- true in syn newer versions (false in our case because no binary support yet), Description: Saves everything in Binary Mode (rbxl/rbxm).
-		--Callback = true, -- Description: If set, the serialized data will be sent to the callback instead of to file.
-		--Clipboard/CopyToClipboard = true, -- Description: If set to true, the serialized data will be set to the clipboard, which can be later pasted into studio easily. Useful for saving models.
-		MaxThreads = 100, -- Description: The number of decompilation threads that can run at once. More threads means it can decompile for scripts at a time.
-		DisableCompression = true, --Description: Disables compression in the binary output
+		-- Binary = false, -- true in syn newer versions (false in our case because no binary support yet), Description: Saves everything in Binary Mode (rbxl/rbxm).
+		--Callback = nil, -- Description: If set, the serialized data will be sent to the callback instead of to file.
+		--Clipboard/CopyToClipboard = false, -- Description: If set to true, the serialized data will be set to the clipboard, which can be later pasted into studio easily. Useful for saving models.
+		-- MaxThreads = 3 -- Description: The number of decompilation threads that can run at once. More threads means it can decompile for scripts at a time.
+		-- DisableCompression = false, --Description: Disables compression in the binary output
 
 		DecompileJobless = false,
 		DecompileIgnore = { -- * Clean these up (merged Old Syn and New Syn)
 			service.Chat,
 			service.TextChatService,
-			ModuleScript = nil,
 		},
 		SaveBytecode = false,
 
@@ -1093,13 +1033,13 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 		ShowStatus = true,
 		SafeMode = false,
 		Anonymous = false,
-		ReadMe = false,
+		ReadMe = true,
 		FilePath = false,
 		Object = false,
 		IsModel = false,
 
-		IgnoreDefaultProperties = false,
-		IgnoreNotArchivable = false,
+		IgnoreDefaultProperties = true,
+		IgnoreNotArchivable = true,
 		IgnorePropertiesOfNotScriptsOnScriptsMode = false,
 		IgnoreSpecialProperties = false,
 
@@ -1116,7 +1056,6 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 
 		IgnoreSharedStrings = true,
 		SharedStringOverwrite = false,
-		TreatUnionsAsParts = EXECUTOR_NAME == "Xeno", -- TODO Temporary true for Solara (once removed, remove Note from docs too)
 
 		OptionsAliases = { -- You can't really modify these as a user
 			FilePath = "FileName",
@@ -1488,15 +1427,6 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 		end
 	end
 
-	do -- ? Fixes crashes on Mobile Devices
-		local DecompileIgnore = OPTIONS.DecompileIgnore
-		local ModuleScript = DecompileIgnore.ModuleScript
-		if type(DecompileIgnore.ModuleScript) == "table" then
-			table.insert(DecompileIgnore, "PlayerModule")
-		elseif ModuleScript == nil then
-			DecompileIgnore.ModuleScript = { "PlayerModule" }
-		end
-	end
 	local InstancePropertyOverrides = {}
 
 	local DecompileIgnore, IgnoreList, IgnoreProperties, NotCreatableFixes =
@@ -1526,7 +1456,6 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 	local IsolatePlayers = OPTIONS.IsolatePlayers
 
 	local SaveNonCreatable = OPTIONS.SaveNonCreatable
-	local TreatUnionsAsParts = OPTIONS.TreatUnionsAsParts
 
 	local DecompileJobless = OPTIONS.DecompileJobless
 	local ScriptCache = OPTIONS.scriptcache and getscriptbytecode
@@ -1555,13 +1484,13 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 		end
 	end
 
-	local ldeccache = GLOBAL_ENV.scriptcache
+	local ldeccache = globalEnv.scriptcache
 
 	local DecompileIgnoring, ToSaveList, ldecompile, placename, elapse_t, SaveNonCreatableWillBeEnabled, RecoveredScripts
 
 	if ScriptCache and not ldeccache then
 		ldeccache = {}
-		GLOBAL_ENV.scriptcache = ldeccache
+		globalEnv.scriptcache = ldeccache
 	end
 
 	if ToSaveInstance == game then
@@ -1708,30 +1637,25 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 		return Size
 	end
 
-	local function wait_for_render()
-		service.RunService.RenderStepped:Wait()
-	end
-
-	local Loading
-	local function run_with_loading(text, keepStatus, waitForRender, taskFunction, ...)
-		local previousStatus
+	local function run_with_loading(text, keepStatus, taskFunction, ...)
+		local Loading, PreviousStatus
 
 		if StatusText then
 			if keepStatus then
-				previousStatus = StatusText.Text
+				PreviousStatus = StatusText.Text
 			end
 			Loading = task.spawn(function()
-				local spinner_count = 0
-				local chars = { "|", "/", "—", "\\" }
+				local SpinnerCount = 0
+				local Chars = { "|", "/", "—", "\\" }
 
 				local function getLoadingText()
-					spinner_count += 1
+					SpinnerCount += 1
 
-					if #chars < spinner_count then
-						spinner_count = 1
+					if #Chars < SpinnerCount then
+						SpinnerCount = 1
 					end
 
-					return chars[spinner_count]
+					return Chars[SpinnerCount]
 				end
 
 				text ..= " "
@@ -1741,18 +1665,14 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 					task.wait(0.25)
 				end
 			end)
-			if waitForRender then
-				wait_for_render()
-			end
 		end
 
 		local result = { taskFunction(...) }
 
 		if Loading then
 			task.cancel(Loading)
-			Loading = nil
-			if previousStatus then
-				StatusText.Text = previousStatus
+			if PreviousStatus then
+				StatusText.Text = PreviousStatus
 			end
 		end
 
@@ -1827,21 +1747,18 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 				local hashed_bytecode
 				if ScriptCache then
 					local s, bytecode = pcall(getscriptbytecode, script) -- 	TODO This is awful because we already do this in Custom Decomp (when we are using it, that is)
-					local cached
+					local Cached
 
 					if s then
 						if not bytecode or bytecode == "" then
 							return "-- The Script is Empty"
 						end
 						hashed_bytecode = sha384(bytecode)
-						cached = ldeccache[hashed_bytecode]
+						Cached = ldeccache[hashed_bytecode]
 					end
 
-					if cached then
-						if __DEBUG_MODE then
-							warn("Found in Cache", script:GetFullName())
-						end
-						return cached
+					if Cached then
+						return Cached
 					elseif DecompileJobless then
 						return "-- Not found in already decompiled ScriptCache"
 					end
@@ -1849,7 +1766,7 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 					task.wait() -- TODO Maybe remove?
 				end
 
-				local ok, result = run_with_loading("Decompiling " .. script.Name, true, nil, DecompileHandler, script)
+				local ok, result = run_with_loading("Decompiling " .. script.Name, true, DecompileHandler, script)
 
 				if not result then
 					ok, result = false, "Empty Output"
@@ -1865,9 +1782,6 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 
 				if ScriptCache and hashed_bytecode then -- TODO there might(?) be an edgecase where it manages to decompile (built-in) even though getscriptbytecode failed, and the output won't get cached
 					ldeccache[hashed_bytecode] = output -- ? Should we cache even if it timed out?
-					if __DEBUG_MODE then
-						warn("Cached", script:GetFullName())
-					end
 				end
 
 				return output
@@ -1904,7 +1818,7 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 			return result == nil
 				or result == "can't get value"
 				or type(result) == "string"
-					and (string_find(result, "Unable to get property " .. propertyName) or property.Category == "Enum" and string_find(
+					and (Find(result, "Unable to get property " .. propertyName) or property.Category == "Enum" and Find(
 						result,
 						"Invalid value for enum "
 					))
@@ -1960,9 +1874,9 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 	local function ReturnItem(className, instance)
 		local ref = referents[instance]
 		if not ref then
-			ref = ref_size
+			ref = ref_count
 			referents[instance] = ref
-			ref_size += 1
+			ref_count += 1
 		end
 
 		return '<Item class="' .. className .. '" referent="' .. ref .. '"><Properties>' -- TODO: Ideally this shouldn't return <Properties> as well as the line below to close it IF  IgnorePropertiesOfNotScriptsOnScriptsMode is Enabled OR If all properties are default (reduces file size by at least 1.4%)
@@ -1992,21 +1906,20 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 	end
 
 	local function GetInheritedProps(className)
-		local prop_list = {}
+		local proplist, propcount = {}, 1
 		local layer = ClassList[className]
 		while layer do
-			local layer_props = layer.Properties
-			table.move(layer_props, 1, #layer_props, #prop_list + 1, prop_list)
-
-			-- for _, prop in layer.Properties do
-			-- 	prop_list[prop_count] = prop -- ? table.clone is needed for case where .Default is modified
-			-- 	prop_count += 1
-			-- end
+			-- local _list_0 = layer.Properties
+			-- table.move(_list_0, 1, #_list_0, #proplist + 1, proplist)
+			for _, prop in layer.Properties do
+				proplist[propcount] = prop -- ? table.clone is needed for case where .Default is modified
+				propcount += 1
+			end
 
 			layer = ClassList[layer.Superclass]
 		end
-		inherited_properties[className] = prop_list
-		return prop_list
+		inherited_properties[className] = proplist
+		return proplist
 	end
 
 	local function save_cache()
@@ -2018,14 +1931,14 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 		totalsize += #savestr
 
 		table.clear(savebuffer)
-		savebuffer_size = 1
+		savebuffer_count = 1
 
 		if StatusText then
 			StatusText.Text = "Saving.. Size: " .. get_size_format()
 		end
 		-- ? Needed for at least 1fps (status text)
 		-- task.wait()
-		wait_for_render()
+		service.RunService.RenderStepped:Wait()
 	end
 
 	local function save_specific(className, properties)
@@ -2042,7 +1955,8 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 				Class = "Script"
 			elseif "Name" == propertyName then
 				Class = "Instance"
-				value, tag = ReturnValueAndTag(val, "string") -- * Doubt ValueType will change
+				local ValueType = ClassList[Class].Properties[propertyName].ValueType
+				value, tag = ReturnValueAndTag(val, ValueType)
 			end
 
 			if Class then
@@ -2058,21 +1972,21 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 			if IgnoreNotArchivable and not instance.Archivable then
 				continue
 			end
-
 			local SkipEntirely = IgnoreList[instance]
 			if SkipEntirely then
 				continue
 			end
 
 			local ClassName = instance.ClassName
+			local Class = ClassList[ClassName]
+			if not Class then
+				continue
+			end
 
 			local InstanceName = instance.Name
-
-			do
-				local OnIgnoredList = IgnoreList[ClassName]
-				if OnIgnoredList and (OnIgnoredList == true or OnIgnoredList[InstanceName]) then
-					continue
-				end
+			local OnIgnoredList = IgnoreList[ClassName]
+			if OnIgnoredList and (OnIgnoredList == true or OnIgnoredList[InstanceName]) then
+				continue
 			end
 
 			if not DecompileIgnoring then
@@ -2080,9 +1994,8 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 
 				if DecompileIgnoring == nil then
 					local DecompileIgnored = DecompileIgnore[ClassName]
-					if DecompileIgnored then
-						DecompileIgnoring = DecompileIgnored == true or DecompileIgnored[InstanceName]
-					end
+					DecompileIgnoring = DecompileIgnored
+						and (DecompileIgnored == true or DecompileIgnored[InstanceName])
 				end
 
 				if DecompileIgnoring then
@@ -2091,39 +2004,23 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 					DecompileIgnoring = 1 -- Ignore one instance
 				end
 			end
-
-			local InstanceOverride, ClassNameOverride
+			local InstanceOverride
 
 			do
-				local function replaceClassName(newClassName)
-					if InstanceName ~= ClassName then -- TODO Compare against default instance instead (TouchTransmitter is called TouchInterest by default)
-						InstanceOverride = InstancePropertyOverrides[instance]
-						if not InstanceOverride then
-							InstanceOverride = { Properties = { Name = "[" .. ClassName .. "] " .. InstanceName } }
-							InstancePropertyOverrides[instance] = InstanceOverride
-						end
-					end
-					ClassName = newClassName
-				end
-
 				local Fix = NotCreatableFixes[ClassName]
-
 				if Fix then
 					if SaveNonCreatable then
-						replaceClassName(Fix)
+						if InstanceName ~= ClassName then
+							InstanceOverride = InstancePropertyOverrides[instance]
+							if not InstanceOverride then
+								InstanceOverride = { Properties = {} }
+								InstancePropertyOverrides[instance] = InstanceOverride
+							end
+							InstanceOverride.Properties.Name = "[" .. ClassName .. "] " .. InstanceName -- ! Assuming anything that has __Children will have .Properties
+						end
+						ClassName = Fix
 					else
 						continue -- They won't show up in Studio anyway (Enable IsolatePlayers if you wish to bypass this)
-					end
-				else -- ! Assuming nothing that is a PartOperation or inherits from it is in NotCreatableFixes
-					if TreatUnionsAsParts and instance:IsA("PartOperation") then
-						replaceClassName("Part")
-						ClassNameOverride = "BasePart" -- * Mutual Superclass for PartOperation and Part; For properties only
-					elseif not ClassList[ClassName] then -- ? API Dump is outdated then
-						if __DEBUG_MODE then
-							warn("Class not Found", ClassName)
-						end
-
-						ClassNameOverride = "Folder"
 					end
 				end
 			end
@@ -2133,16 +2030,13 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 			end
 			local ChildrenOverride = InstanceOverride and InstanceOverride.__Children
 
-			-- ? The reason we only save .Name (and few other props in save_specific) is because
-			-- ? we can be sure this is a custom container (ex. NilInstancesFixes)
-			-- ? However, in case of NotCreatableFixes, the Instance might have Tags, Attributes etc. that can potentially be saved (even though it's a Folder)
 			if ChildrenOverride then
-				savebuffer[savebuffer_size] = save_specific(ClassName, InstanceOverride.Properties) -- ! Assuming anything that has __Children will have .Properties
-				savebuffer_size += 1
+				savebuffer[savebuffer_count] = save_specific(ClassName, InstanceOverride.Properties) -- ! Assuming anything that has __Children will have .Properties
+				savebuffer_count += 1
 			else
 				-- local Properties =
-				savebuffer[savebuffer_size] = ReturnItem(ClassName, instance) -- TODO: Ideally this shouldn't return <Properties> as well as the line below to close it IF  IgnorePropertiesOfNotScriptsOnScriptsMode is ENABLED
-				savebuffer_size += 1
+				savebuffer[savebuffer_count] = ReturnItem(ClassName, instance) -- TODO: Ideally this shouldn't return <Properties> as well as the line below to close it IF  IgnorePropertiesOfNotScriptsOnScriptsMode is ENABLED
+				savebuffer_count += 1
 				if not (IgnorePropertiesOfNotScriptsOnScriptsMode and not isLuaSourceContainer(instance)) then
 					local default_instance, new_def_inst
 
@@ -2161,10 +2055,10 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 							end
 						end
 					end
-					local proplist = inherited_properties[ClassNameOverride or ClassName]
+					local proplist = inherited_properties[ClassName]
 					if not proplist then
-						proplist = GetInheritedProps(ClassNameOverride or ClassName)
-						inherited_properties[ClassNameOverride or ClassName] = proplist
+						proplist = GetInheritedProps(ClassName)
+						inherited_properties[ClassName] = proplist
 					end
 					for _, Property in proplist do
 						local PropertyName = Property.Name
@@ -2270,9 +2164,9 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 
 								value = referents[raw]
 								if not value then
-									value = ref_size
+									value = ref_count
 									referents[raw] = value
-									ref_size += 1
+									ref_count += 1
 								end
 							else
 								value = "null"
@@ -2297,8 +2191,8 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 										local should_decompile = true
 										local LinkedSource
 										local LinkedSource_Url = instance.LinkedSource -- ! Assuming every Class that has ProtectedString Source property also has a LinkedSource property
-										local hasLinkedSource = LinkedSource_Url ~= ""
-										if hasLinkedSource then
+										local LinkedSource_notEmpty = LinkedSource_Url ~= ""
+										if LinkedSource_notEmpty then
 											local Path = instance:GetFullName()
 											if RecoveredScripts then
 												table.insert(RecoveredScripts, Path)
@@ -2313,62 +2207,30 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 
 											LinkedSource = string.match(LinkedSource_Url, "%w+$") -- TODO: No sure if this pattern matches all possible cases. Example is: 'rbxassetid://0&hash=cd73dd2fe5e5013137231c227da3167e'
 											if LinkedSource then
-												local cached = ldeccache[LinkedSource]
+												local Cached = ldeccache[LinkedSource]
 
-												if cached then
-													value = cached
+												if Cached then
+													value = Cached
 													should_decompile = nil
 												elseif DecompileJobless then
 													value = "-- Not found in already decompiled ScriptCache"
 													should_decompile = nil
 												end
 
-												local function filterResults(str)
-													local o, r =
-														pcall(service.HttpService.JSONDecode, service.HttpService, str)
-													if o and r.errors then
-														return false
-													end
-													return true
-												end
-
-												local asset = (string.find(LinkedSource, "%a") and "hash" or "id")
-													.. "="
-													.. LinkedSource
-
-												local source
+												local Source
 												local ok = pcall(function()
-													source = game:HttpGet(
-														"https://assetdelivery.roproxy.com/v1/asset/?" .. asset
+													Source = game:HttpGet(
+														"https://assetdelivery.roproxy.com/v1/asset/?"
+															.. (string.find(LinkedSource, "%a") and "hash" or "id")
+															.. "="
+															.. LinkedSource
 													)
 												end)
 
 												if ok then
-													ok = filterResults(source)
-												end
+													ldeccache[LinkedSource] = Source
 
-												if not ok then
-													ok = run_with_loading(
-														"Getting " .. instance.Name .. " LinkedSource",
-														true,
-														nil,
-														pcall,
-														function()
-															source = game:HttpGet(
-																"https://linkedsource.glitch.me/asset/" .. asset
-															)
-														end
-													)
-												end
-
-												if ok then
-													ok = filterResults(source)
-												end
-
-												if ok then
-													ldeccache[LinkedSource] = source
-
-													value = source
+													value = Source
 
 													-- should_decompile = nil
 												end
@@ -2382,10 +2244,10 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 										end
 
 										if should_decompile then
-											local isLocalScript = instance:IsA("LocalScript")
+											local IsLocalScript = instance:IsA("LocalScript")
 											if
-												isLocalScript and instance.RunContext == Enum.RunContext.Server
-												or not isLocalScript
+												IsLocalScript and instance.RunContext == Enum.RunContext.Server
+												or not IsLocalScript
 													and instance:IsA("Script")
 													and instance.RunContext ~= Enum.RunContext.Client
 											then
@@ -2402,7 +2264,7 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 										end
 
 										value = "-- Saved by UniversalSynSaveInstance https://discord.gg/wx4ThpAsmw\n\n"
-											.. (hasLinkedSource and "-- Original Source: https://assetdelivery.roblox.com/v1/asset/?id=" .. (LinkedSource or LinkedSource_Url) .. "\n\n" or "")
+											.. (LinkedSource_notEmpty and "-- Original Source: https://assetdelivery.roblox.com/v1/asset/?id=" .. (LinkedSource or LinkedSource_Url) .. "\n\n" or "")
 											.. value
 									end
 								end
@@ -2428,18 +2290,35 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 							end
 						end
 
+-- Conversion logic for UnionOperation to Part
+for i, instance in pairs(workspace:GetDescendants()) do
+    if instance:IsA("UnionOperation") then
+        local newPart = Instance.new("Part")
+        newPart.Name = instance.Name
+        newPart.CFrame = instance.CFrame
+        newPart.Size = instance.Size
+        newPart.Anchored = instance.Anchored
+        newPart.CanCollide = instance.CanCollide
+        newPart.Color = instance.Color
+        newPart.Material = instance.Material
+        newPart.Parent = instance.Parent
+
+        instance:Destroy()
+    end
+end
+
 						if tag then
-							savebuffer[savebuffer_size] = ReturnProperty(tag, PropertyName, value)
-							savebuffer_size += 1
+							savebuffer[savebuffer_count] = ReturnProperty(tag, PropertyName, value)
+							savebuffer_count += 1
 						else --if __DEBUG_MODE then -- * We print this anyway because very important
 							warn("UNSUPPORTED TYPE (OPEN A GITHUB ISSUE): ", ValueType, ClassName, PropertyName)
 						end
 					end
 				end
-				savebuffer[savebuffer_size] = "</Properties>"
-				savebuffer_size += 1
+				savebuffer[savebuffer_count] = "</Properties>"
+				savebuffer_count += 1
 
-				if SaveCacheInterval < savebuffer_size then
+				if SaveCacheInterval < savebuffer_count then
 					save_cache()
 				end
 			end
@@ -2456,27 +2335,27 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 				DecompileIgnoring = nil
 			end
 
-			savebuffer[savebuffer_size] = "</Item>"
-			savebuffer_size += 1
+			savebuffer[savebuffer_count] = "</Item>"
+			savebuffer_count += 1
 		end
 	end
 
 	local function save_extra(name, hierarchy, customClassName, source)
-		savebuffer[savebuffer_size] = save_specific((customClassName or "Folder"), { Name = name, Source = source })
-		savebuffer_size += 1
+		savebuffer[savebuffer_count] = save_specific((customClassName or "Folder"), { Name = name, Source = source })
+		savebuffer_count += 1
 		if hierarchy then
 			save_hierarchy(hierarchy)
 		end
-		savebuffer[savebuffer_size] = "</Item>"
-		savebuffer_size += 1
+		savebuffer[savebuffer_count] = "</Item>"
+		savebuffer_count += 1
 	end
 
 	local function save_game()
 		writefile(placename, "")
 
 		if IsModel then
-			savebuffer[savebuffer_size] = '<Meta name="ExplicitAutoJoints">true</Meta>'
-			savebuffer_size += 1
+			savebuffer[savebuffer_count] = '<Meta name="ExplicitAutoJoints">true</Meta>'
+			savebuffer_count += 1
 		end
 		--[[
 			-- ? Roblox encodes the following additional attributes. These are not required. Moreover, any defined schemas are ignored, and not required for a file to be valid: xmlns:xmime="http://www.w3.org/2005/05/xmlmime" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.roblox.com/roblox.xsd"  
@@ -2521,7 +2400,7 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 		end
 
 		if NilInstances and global_container.getnilinstances then
-			local nil_instances, nil_instances_size = {}, 1
+			local nilinstances = {}
 
 			local NilInstancesFixes = OPTIONS.NilInstancesFixes
 
@@ -2550,12 +2429,11 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 					end
 				end
 				if instance then
-					nil_instances[nil_instances_size] = instance
-					nil_instances_size += 1
+					table.insert(nilinstances, instance)
 				end
 			end
 			SaveNonCreatable = true
-			save_extra("Nil Instances", nil_instances)
+			save_extra("Nil Instances", nilinstances)
 		end
 
 		if OPTIONS.ReadMe then
@@ -2594,9 +2472,7 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 		If you can't move the Camera, run the scripts in the Studio Command Bar:
 			
 		workspace.CurrentCamera.CameraType = Enum.CameraType.Fixed
-		
-		Or Destroy the Camera.
-
+				
 		This file was generated with the following settings:
 				]]
 					.. service.HttpService:JSONEncode(OPTIONS)
@@ -2616,14 +2492,14 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 			end
 
 			if 1 < #tmp then -- TODO: This sucks so much because we try to iterate a table just to check this (check above)
-				savebuffer[savebuffer_size] = table.concat(tmp)
-				savebuffer[savebuffer_size] = "</SharedStrings>"
-				savebuffer_size += 2 -- ? Is this fine
+				savebuffer[savebuffer_count] = table.concat(tmp)
+				savebuffer[savebuffer_count] = "</SharedStrings>"
+				savebuffer_count += 2 -- ? Is this fine
 			end
 		end
 
-		savebuffer[savebuffer_size] = "</roblox>"
-		savebuffer_size += 1
+		savebuffer[savebuffer_count] = "</roblox>"
+		savebuffer_count += 1
 		save_cache()
 		do
 			-- ! Assuming we only write to file once hence why we only filter once
@@ -2635,27 +2511,17 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 
 				totalstr = string.gsub(string.gsub(totalstr, LocalPlayer.UserId, "1"), LocalPlayer.Name, "Roblox")
 			end
+			run_with_loading("Writing " .. get_size_format() .. " to File", nil, writefile, placename, totalstr)
 
-			-- if EXECUTOR_NAME ~= "Celery" then
-			run_with_loading(
-				"Writing " .. get_size_format() .. " to File (Depends on Exec)",
-				nil,
-				true,
-				writefile,
-				placename,
-				totalstr
-			)
-			-- else
-			-- 	local SegmentLength = 4145728 -- Celery has an arbitrary savefile/appendfile size limit of ~4MB for reasons unknown. This is a workaround to save the file in segments.
-
-			-- 	local Length = math.ceil(totalsize / SegmentLength)
-
-			-- 	for i = 1, Length do
-			-- 		local savestr = string.sub(totalstr, (i - 1) * SegmentLength, i * SegmentLength)
-			-- 		StatusText.Text = "Writing to file... " .. math.round(i / Length * 100) .. "%"
-			-- 		appendfile(placename, savestr)
-			-- 		task.wait(1)
-			-- 	end
+			-- local SegmentLength = 250 * SaveCacheInterval
+			-- local Length = math.ceil(totalsize / SegmentLength)
+			-- print(Length)
+			-- for i = 1, Length do
+			-- 	local savestr = string.sub(totalstr, (i - 1) * SegmentLength, i * SegmentLength)
+			-- 	print(#savestr)
+			-- 	appendfile(placename, savestr)
+			-- 	print("saved")
+			-- 	task.wait(1)
 			-- end
 		end
 		table.clear(SharedStrings)
@@ -2714,7 +2580,7 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 
 	if OPTIONS.ShowStatus then
 		do
-			local Exists = GLOBAL_ENV._statustext
+			local Exists = globalEnv._statustext
 			if Exists then
 				Exists:Destroy()
 			end
@@ -2722,7 +2588,7 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 
 		local StatusGui = Instance.new("ScreenGui")
 
-		GLOBAL_ENV._statustext = StatusGui
+		globalEnv._statustext = StatusGui
 
 		StatusGui.DisplayOrder = 2_000_000_000
 		pcall(function() -- ? Compatibility with level 2
@@ -2778,7 +2644,7 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 		if OPTIONS.SafeMode then
 			service.Players.LocalPlayer:Kick("\nSaving in Progress..\nPlease do NOT leave")
 			service.RunService:Set3dRenderingEnabled(false)
-			wait_for_render()
+			service.RunService.RenderStepped:Wait()
 			task.delay(10, service.GuiService.ClearError, service.GuiService)
 		end
 
@@ -2791,7 +2657,7 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 				connection:Disconnect()
 			end
 		end
-		-- GLOBAL_ENV.__USSI = nil
+
 		if StatusText then
 			task.spawn(function()
 				elapse_t = os.clock() - elapse_t
@@ -2802,10 +2668,6 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 					StatusText.TextColor3 = Color3.new(0, 1)
 					task.wait(Log10 * 2 + ExtraTime)
 				else
-					if Loading then
-						task.cancel(Loading)
-						Loading = nil
-					end
 					StatusText.Text = "Failed! Check F9 console for more info"
 					StatusText.TextColor3 = Color3.new(1)
 					warn("Error found while saving:")
