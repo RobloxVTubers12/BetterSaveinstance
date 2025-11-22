@@ -2301,7 +2301,7 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 		__DEBUG_MODE = false,
 		DisableGethiddenpropertyFallback = (gethiddenproperty and EXECUTOR_NAME ~= "Nihon") or false,
 		Crashlog = false,
-		-- Binary = false, -- true in syn newer versions (false in our case because no binary support yet), Description: Saves everything in Binary Mode (rbxl/rbxm).
+		Binary = true, -- true in syn newer versions (false in our case because no binary support yet), Description: Saves everything in Binary Mode (rbxl/rbxm).
 		Callback = false,
 		--Clipboard/CopyToClipboard = false, -- Description: If set to true, the serialized data will be set to the clipboard, which can be later pasted into studio easily. Useful for saving models. (Binary Only)
 		-- MaxThreads = 3 -- Description: The number of decompilation threads that can run at once. More threads means it can decompile for scripts at a time.
