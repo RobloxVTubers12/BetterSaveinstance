@@ -370,56 +370,67 @@ The value of each component is represented by the text content formatted as a 32
 			.. "</YO>"
 	end,
 	--UniqueId = function(raw)
-	--[[
-		    # UniqueId properties might be random everytime Studio saves a place file
-    # and don't have a use right now outside of packages, which SSI doesn't
-    # account for anyway. They generate diff noise, so we shouldn't serialize
-    # them until we have to.
-	]]
-	-- 	return -- ? No idea if this even needs a Descriptor
-	-- end,
+--[[
+    UniqueId properties might be random every time Studio saves a place file.
+    They create diff noise and SSI doesn't use them, so we shouldn't serialize
+    them until actually required.
+]]
+
+-- return -- ? No idea if this even needs a Descriptor
+
+return {
 	Vector2 = function(raw)
 		--[[
-    X: Represents the X component. Interpreted as a <float>.
-    Y: Represents the Y component. Interpreted as a <float>.
-	]]
+            X: Represents the X component (<float>)
+            Y: Represents the Y component (<float>)
+        ]]
 		return Descriptors.__VECTOR(raw.X, raw.Y)
 	end,
+
 	Vector2int16 = function(raw)
 		--[[
-    X: Represents the X component. Interpreted as an <int>.
-    Y: Represents the Y component. Interpreted as an <int>.
-		]]
+            X: Represents the X component (<int>)
+            Y: Represents the Y component (<int>)
+        ]]
 		return Descriptors.__VECTOR(raw.X, raw.Y)
 	end,
+
 	Vector3 = function(raw)
 		--[[
-    X: Represents the X component. Interpreted as a <float>.
-    Y: Represents the Y component. Interpreted as a <float>.
-    Z: Represents the Z component. Interpreted as a <float>.
-	]]
+            X: Represents the X component (<float>)
+            Y: Represents the Y component (<float>)
+            Z: Represents the Z component (<float>)
+        ]]
 		return Descriptors.__VECTOR(raw.X, raw.Y, raw.Z)
 	end,
+
 	Vector3int16 = function(raw)
 		--[[
-    X: Represents the X component. Interpreted as an <int>.
-    Y: Represents the Y component. Interpreted as an <int>.
-    Z: Represents the Z component. Interpreted as an <int>.
-	]]
+            X: Represents the X component (<int>)
+            Y: Represents the Y component (<int>)
+            Z: Represents the Z component (<int>)
+        ]]
 		return Descriptors.__VECTOR(raw.X, raw.Y, raw.Z)
 	end,
+
 	bool = function(raw)
+        -- Convert boolean → "true" or "false"
 		return tostring(raw)
 	end,
 
 	double = function(raw, default)
-		return Descriptors.__APIPRECISION(raw, default or 17) --? A precision of at least 17 is required to properly represent a 64-bit floating point value, so this amount is recommended.
-	end, -- ? wouldn't float be better as an optimization
-	float = function(raw, default)
-		return Descriptors.__APIPRECISION(raw, default or 9) -- ? A precision of at least 9 is required to properly represent a 32-bit floating point value, so this amount is recommended.
+		-- A precision of at least 17 is needed for 64-bit doubles.
+		return Descriptors.__APIPRECISION(raw, default or 17)
 	end,
+
+	float = function(raw, default)
+		-- A precision of at least 9 is needed for 32-bit floats.
+		return Descriptors.__APIPRECISION(raw, default or 9)
+	end,
+
 	string = function(raw, skipcheck)
-		return not skipcheck and raw == "" and raw or raw:gsub(EscapesPattern, Escapes)
+        -- Escape string unless skipcheck is true
+		return (not skipcheck and raw == "") and raw or raw:gsub(EscapesPattern, Escapes)
 	end,
 }
 
