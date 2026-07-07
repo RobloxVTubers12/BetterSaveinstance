@@ -2074,13 +2074,13 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 	local StatusText
 
 	local OPTIONS = {
-		mode = "optimized",
+		mode = "full",
 		noscripts = false,
 		scriptcache = true,
 		-- decomptype = "",
 		timeout = 0,
 		-- * New:
-		__DEBUG_MODE = false,
+		__DEBUG_MODE = true,
 
 		Binary = true, -- true in syn newer versions (false in our case because no binary support yet), Description: Saves everything in Binary Mode (rbxl/rbxm).
 		Callback = nil,
