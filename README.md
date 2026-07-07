@@ -10,7 +10,7 @@ local Params = {
  SSI = "saveinstance",
 }
 local synsaveinstance = loadstring(game:HttpGet(Params.RepoURL .. Params.SSI .. ".luau", true), Params.SSI)()
-local Options = {} -- Documentation here: https://github.com/Devraj2010isme/BetterSaveinstance/blob/main/README.md
+local Options = {} -- Documentation here: https://github.com/RobloxVTubers12/BetterSaveinstance/blob/main/README.md
 synsaveinstance(Options)
 ```
 # Differences From the Original
