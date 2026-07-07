@@ -2095,7 +2095,7 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 			ModuleScript = nil,
 		},
 		IgnoreDefaultPlayerScripts = false,
-		SaveBytecode = ture,
+		SaveBytecode = true,
 
 		IgnoreProperties = {},
 
@@ -2105,15 +2105,15 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 		NilInstances = false,
 		NilInstancesFixes = {},
 
-		SaveCacheInterval = 0x1600 * 10,
+		SaveCacheInterval = math.huge,
 		ShowStatus = true,
-		SafeMode = false,
+		SafeMode = true,
 		ShutdownWhenDone = false,
 		AntiIdle = true,
 		Anonymous = false,
 		ReadMe = false,
 		FilePath = false,
-		AvoidFileOverwrite = true,
+		AvoidFileOverwrite = false,
 		Object = false,
 		IsModel = false,
 
