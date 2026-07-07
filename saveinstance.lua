@@ -2214,16 +2214,16 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 	local StatusText
 
 	local OPTIONS = {
-		mode = "optimized",
+		mode = "full",
 		noscripts = false,
 		scriptcache = true,
 		decomptype = "",
-		timeout = 30,
+		timeout = 0,
 		-- * New:
-		__DEBUG_MODE = false,
+		__DEBUG_MODE = true,
 		DisableGethiddenpropertyFallback = (gethiddenproperty and EXECUTOR_NAME ~= "Nihon") or false,
 		Crashlog = false,
-		-- Binary = false, -- true in syn newer versions (false in our case because no binary support yet), Description: Saves everything in Binary Mode (rbxl/rbxm).
+		Binary = true, -- true in syn newer versions (false in our case because no binary support yet), Description: Saves everything in Binary Mode (rbxl/rbxm).
 		Callback = false,
 		--Clipboard/CopyToClipboard = false, -- Description: If set to true, the serialized data will be set to the clipboard, which can be later pasted into studio easily. Useful for saving models. (Binary Only)
 		-- MaxThreads = 3 -- Description: The number of decompilation threads that can run at once. More threads means it can decompile for scripts at a time.
@@ -2235,10 +2235,10 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 			"TextChatService",
 			ModuleScript = nil,
 		},
-		IgnoreDefaultPlayerScripts = true,
-		SaveBytecode = false,
-		SaveBytecodeIfDecompilerFails = false,
-		SaveCompilationErrors = true,
+		IgnoreDefaultPlayerScripts = false,
+		SaveBytecode = true,
+		SaveBytecodeIfDecompilerFails = true,
+		SaveCompilationErrors = false,
 		IgnoreProperties = {},
 
 		IgnoreList = { "CoreGui", "CorePackages" },
@@ -2247,19 +2247,19 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 		NilInstances = false,
 		NilInstancesFixes = {},
 
-		SaveCacheInterval = 0x1600 * 10,
+		SaveCacheInterval = math.hugw,
 		ShowStatus = true,
-		SafeMode = false,
+		SafeMode = true,
 		ShutdownWhenDone = false,
 		AntiIdle = true,
 		Anonymous = false,
-		ReadMe = true,
+		ReadMe = false,
 		FilePath = false,
 		Object = false,
 		IsModel = false,
 
-		IgnoreDefaultProperties = true,
-		IgnoreNotArchivable = true,
+		IgnoreDefaultProperties = false,
+		IgnoreNotArchivable = false,
 		IgnorePropertiesOfNotScriptsOnScriptsMode = false,
 		IgnoreSpecialProperties = ArrayToDict({"Xeno", "Solara"})[EXECUTOR_NAME] or false, -- ! Please submit more Executors that crash on gethiddenproperty (with this disabled basically). Xeno (also JJSploit, which uses Xeno's api and has the same identifyexecutor() as Xeno) is because gethiddenproperty returns 0 when it can't read a property instead of failing. Solara's gethiddenproperty is just slow.
 
