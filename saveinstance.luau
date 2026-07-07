@@ -2080,7 +2080,7 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 		-- decomptype = "",
 		timeout = 0,
 		-- * New:
-		__DEBUG_MODE = true,
+		__DEBUG_MODE = false,
 
 		Binary = true, -- true in syn newer versions (false in our case because no binary support yet), Description: Saves everything in Binary Mode (rbxl/rbxm).
 		Callback = nil,
@@ -2113,7 +2113,7 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 		Anonymous = false,
 		ReadMe = false,
 		FilePath = false,
-		AvoidFileOverwrite = false,
+		AvoidFileOverwrite = true,
 		Object = false,
 		IsModel = false,
 
